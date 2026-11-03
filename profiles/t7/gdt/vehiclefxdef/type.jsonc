@@ -1,0 +1,5 @@
+{
+  // vehiclefxdef (66), HydraX VehicleFXDef.cs: data only
+  "gdf": "vehiclefxdef.gdf",
+  "constants": { "configstringFileType": "VEHICLEFXDEF" }
+}
