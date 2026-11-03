@@ -1,0 +1,7 @@
+build/
+out/
+.vs/
+# A profile's machine-specific paths (exe, working folders, install), merged over its profile.json
+profiles/*/profile.local.json
+# The newer games' string cipher tables (scripts/*_string_cipher.py in graywolf-tools): not shipped
+profiles/*/strings.cipher.txt
