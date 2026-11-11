@@ -23,7 +23,17 @@ namespace ZoneMemory
     inline constexpr size_t SectionFrom = 1 << 20;
 
     void* Allocate(size_t Bytes);
+    // Its section torn down by the time Free returns, but for one: while no other waits, the
+    // section freed is torn down on a thread of its own (one zone's close does not wait on it)
     void Free(void* P, size_t Bytes);
+
+    // The bytes of the sections not torn down yet (zones held, and the one being torn down), and
+    // the most there were in the process
+    struct Usage
+    {
+        uint64_t Bytes = 0, Peak = 0;
+    };
+    Usage Held();
 
     template <class T>
     struct Allocator

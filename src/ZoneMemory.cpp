@@ -5,6 +5,7 @@
 #endif
 #include <Windows.h>
 
+#include <atomic>
 #include <cstring>
 #include <condition_variable>
 #include <deque>
@@ -31,8 +32,24 @@ namespace
         return It != Sections.end() && It->second.Bytes >= N ? It->second.Mapping : nullptr;
     }
 
-    // The views freed, unmapped and their sections closed one after the other on one thread. Never
-    // destroyed (the process may end with some queued: the system unmaps them).
+    // the bytes of the sections not torn down yet (held, or freed and waiting for the unmapping
+    // thread), and the most there were
+    std::atomic<uint64_t> HeldBytes{ 0 }, PeakBytes{ 0 };
+
+    void TearDown(void* View, HANDLE Mapping, size_t Bytes)
+    {
+        UnmapViewOfFile(View);
+        if (Mapping != nullptr) CloseHandle(Mapping);
+        HeldBytes -= Bytes;
+    }
+
+    // A section freed torn down on a thread of its own when no other waits there: one zone's close
+    // (hundreds of MB of pages, ~150 ms for 650 MB) does not wait on it. A section freed while one
+    // is still waiting is torn down by the thread freeing it: zones read side by side by several
+    // workers, each freeing ~2 GB a second (a patched zone frees its base, its delta and its
+    // target), outran the one thread (17 GB held after MWIII's 596 zones on 8 workers); now what is
+    // held is what is alive, and at most one section more. Never destroyed (the process may end
+    // with one queued: the system unmaps it).
     class Unmapping
     {
     public:
@@ -41,31 +58,41 @@ namespace
             std::thread([this] {
                 for (;;)
                 {
-                    std::pair<void*, HANDLE> Next;
+                    Pending Next;
                     {
                         std::unique_lock<std::mutex> Hold(QueueLock);
-                        Ready.wait(Hold, [this] { return !Queue.empty(); });
-                        Next = Queue.front();
-                        Queue.pop_front();
+                        Ready.wait(Hold, [this] { return Waiting.View != nullptr; });
+                        Next = Waiting;
                     }
-                    UnmapViewOfFile(Next.first);
-                    if (Next.second != nullptr) CloseHandle(Next.second);
+                    TearDown(Next.View, Next.Mapping, Next.Bytes);
+                    // (free again only once torn down: one section at a time waits here)
+                    const std::lock_guard<std::mutex> Hold(QueueLock);
+                    Waiting = Pending();
                 }
             }).detach();
         }
-        void Push(void* View, HANDLE Mapping)
+        // false when another waits: the caller tears it down
+        bool Push(void* View, HANDLE Mapping, size_t Bytes)
         {
             {
                 const std::lock_guard<std::mutex> Hold(QueueLock);
-                Queue.emplace_back(View, Mapping);
+                if (Waiting.View != nullptr) return false;
+                Waiting = { View, Mapping, Bytes };
             }
             Ready.notify_one();
+            return true;
         }
 
     private:
+        struct Pending
+        {
+            void* View = nullptr;
+            HANDLE Mapping = nullptr;
+            size_t Bytes = 0;
+        };
         std::mutex QueueLock;
         std::condition_variable Ready;
-        std::deque<std::pair<void*, HANDLE>> Queue;
+        Pending Waiting;
     };
     Unmapping& Unmapper()
     {
@@ -88,9 +115,18 @@ namespace wolff::ZoneMemory
             CloseHandle(M);
             throw std::bad_alloc();
         }
-        const std::lock_guard<std::mutex> Hold(Lock);
-        Sections[P] = { M, Bytes };
+        {
+            const std::lock_guard<std::mutex> Hold(Lock);
+            Sections[P] = { M, Bytes };
+        }
+        const uint64_t Now = HeldBytes += Bytes;
+        for (uint64_t Was = PeakBytes.load(); Now > Was && !PeakBytes.compare_exchange_weak(Was, Now);) {}
         return P;
+    }
+
+    Usage Held()
+    {
+        return { HeldBytes.load(), PeakBytes.load() };
     }
 
     void Free(void* P, size_t Bytes)
@@ -102,18 +138,19 @@ namespace wolff::ZoneMemory
             return;
         }
         HANDLE M = nullptr;
+        size_t Size = 0;
         {
             const std::lock_guard<std::mutex> Hold(Lock);
             const auto It = Sections.find(P);
             if (It != Sections.end())
             {
                 M = It->second.Mapping;
+                Size = It->second.Bytes;
                 Sections.erase(It);
             }
         }
-        // unmapped on a thread of its own (hundreds of MB of pages torn down: a zone's close waited
-        // on it); a copy-on-write view of it keeps the section alive until that view is unmapped
-        Unmapper().Push(P, M);
+        // (a copy-on-write view of it keeps the section alive until that view is unmapped)
+        if (!Unmapper().Push(P, M, Size)) TearDown(P, M, Size);
     }
 
     Copy::Copy(ByteView From)
