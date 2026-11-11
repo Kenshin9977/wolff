@@ -51,6 +51,9 @@ namespace wolff::ZoneTables
         // stream.rewind_prepare (Black Ops 7): pointers DB_RewindPrepare decides, linked by their
         // top bits and the rewind table's keys, and asset pointers by the asset's hash (PointerIf)
         bool RewindRefs = false;
+        // stream.rewind_links (Modern Warfare 4): those pointers linked without the layout too, so
+        // asset@ reads through a rewind key (equipmentsfx sizes arrays by the struct a key names)
+        bool RewindLinks = false;
         uint64_t BackrefMaxNibble = 0xA;            // top nibble of a packed back reference
         bool Iw6Refs = false;                       // IW6: 0xFDFDFDF<block><offset + 1> instead
         // export.both_marker_assets: a SUB* row (a pointer taking both markers, the resident one

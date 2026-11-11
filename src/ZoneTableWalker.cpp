@@ -640,11 +640,21 @@ namespace
                 const std::string Rewind = Want;
                 snprintf(Want, sizeof(Want), "(u64@0x%llx & 0x7fffffffffffffff) != 0x3fffffffffffffff", Off);
                 const std::string Asset = Want;
-                if ((size_t)Idx + 1 < Tb.Actions.size() && Tb.Actions[(size_t)Idx + 1].C == CIf && !Tb.Actions[(size_t)Idx + 1].Args.empty())
+                size_t NextIdx = (size_t)Idx + 1;
+                // stream.rewind_prepare.lookup (Modern Warfare 4): SUM lines (the cache lookup's
+                // answer) stand between the chain's non-null test and its descriptor test
+                while (Rules->RewindLinks && NextIdx < Tb.Actions.size() && Tb.Actions[NextIdx].C == CSum) NextIdx++;
+                if (NextIdx < Tb.Actions.size() && Tb.Actions[NextIdx].C == CIf && !Tb.Actions[NextIdx].Args.empty())
                 {
-                    const std::string& Next = Tb.Actions[(size_t)Idx + 1].Args[0].Text;
+                    const std::string& Next = Tb.Actions[NextIdx].Args[0].Text;
                     if (Next == Rewind) T.Kind = 3;
                     else if (Next == Asset) T.Kind = 4;
+                    else if (Rules->RewindLinks)
+                    {
+                        // Modern Warfare 4's clang build tests the inline marker first, then the name
+                        snprintf(Want, sizeof(Want), "(u64@0x%llx & 0x7fffffffffffffff) == 0x7fffffffffffffff", Off);
+                        if (Next == Want) T.Kind = 4;
+                    }
                 }
                 // an asset pointer: the type its inline arm reads (asset names are hashed without
                 // their type: an xmodel and a material may share one)
@@ -706,7 +716,7 @@ namespace
                 // the data; any other value a key the rewind table holds (0x38cc9d0). A loaded
                 // pointer's key is registered unless bit 61 is set (DB_RewindEnd 0x382f4f0)
                 constexpr uint64_t KeyMask60 = 0x0FFFFFFFFFFFFFFFull;
-                if (!Layout) return;
+                if (!Layout && !Rules->RewindLinks) return;
                 if ((Head >> 63) & 1 || (Head >> 60) & 1)
                 {
                     const int64_t Target = Pos + (((Head >> 63) & 1) ? 8 : 0);
@@ -2010,6 +2020,7 @@ bool LoadProfile(const std::string& DirOrName, const std::vector<std::filesystem
         Out.Rules.Block32 = S.contains("backref_style") && S.at("backref_style").get<std::string>() == "block32";
         Out.Rules.PointerIfs = S.contains("pointer_ifs") && S.at("pointer_ifs").get<bool>();
         Out.Rules.RewindRefs = S.contains("rewind_prepare");
+        Out.Rules.RewindLinks = Out.Rules.RewindRefs && S.contains("rewind_links") && S.at("rewind_links").get<bool>();
         if (Out.Rules.RewindRefs)
         {
             // the rewind table's keys (the low 60 bits of a loaded pointer) and the assets' name
