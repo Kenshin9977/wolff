@@ -6,7 +6,7 @@ f9de40|19
 stringtable|2
 # menufile (0x95770) +0x10: 0x957f0 tests the menus pointer != 0, then aligns to 4 (0x957fc) before count x 8
 menufile|2
-# Read off the loaders by scripts/iw_layout_proven.py: the alloc runs before the count is
+# Read off the loaders by scripts/iw_layout_proven.py (the delta frames, pointer actions since 2026-11-13): the alloc runs before the count is
 # read, so a present pointer with a count of 0 still aligns the cursor.
 addon_map_ents|5
 addon_map_ents|6
@@ -274,3 +274,7 @@ xmodel|4
 xmodel|5
 xmodel|7
 xmodel|8
+# Read off the loaders by scripts/iw_layout_proven.py (the delta frames, pointer actions since 2026-11-13): the alloc runs before the count is
+# read, so a present pointer with a count of 0 still aligns the cursor.
+f9b420|2
+f9b4c0|2

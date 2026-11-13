@@ -49,6 +49,7 @@
     "backref_max_nibble": "0x0",
     "backref_style": "block28",
     "byte_strings": true,
+    "conditional_pointer_reads": true,
     "load_stream_read_return": "0xaadb0",
     "each_op": true,
     "struct_here": true,

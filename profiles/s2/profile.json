@@ -42,6 +42,7 @@
     "note": "the game's asset loop (DB_LoadXFile tail, 0x4a61fc): varXAsset = &list[i]; Load_XAsset(false). Load_XAsset reads nothing (flag 0) and hands &header to Load_XAssetHeader (0x4c57e0), an if-chain over the type calling each Load_<T>Ptr."
   },
   "stream": {
+    "conditional_pointer_reads": true,
     "blocks": 7,
     "block_entry_size": 16,
     "dead_blocks": [

@@ -2054,6 +2054,20 @@ BYTES|0x0|(((((u32@0xc >> 31) & 0xff) != 0) * u32@0x8) & 0xffffffff)
 ENDIF
 ENDIF
 
+# xanim 0x3b1fec0: the indices table, its pointer at 0. Clips of 256 frames or more: alloc(1) (align
+# 2, 0x3b1ff01), the fixup, Load_Stream(1, indexCount * 2); shorter ones: the fixup, then
+# Load_Stream(1, indexCount) unaligned (XAnimParts u16@0x56 frames, u32@0x40 indexCount). The
+# transcriber leaves `if (p) { if (c) {fix; read(a)} else {fix; read(b)} }` as plain reads (its
+# pointer test wants the fixup before the if/else), so the pointer was never linked and every key
+# frame of a clip over 255 frames exported as 0 (GitHub issue #2): a pointer action in each arm,
+# each its own alignment.
+### f33c3980
+IF|u16@%0x56 >= 256
+BYTES+|0x0|(u32@%0x40 + u32@%0x40)
+ELSE
+BYTES+|0x0|u32@%0x40
+ENDIF
+
 
 # ---- the campaign build's own (mwiii_sp, sp23-cod.exe)
 

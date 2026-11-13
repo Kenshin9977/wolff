@@ -37,6 +37,7 @@
     "note": "ParseFastFile 0x36b1600: varXAsset (0xbacc070) = &list[i]; Load_XAsset(1) (no read: the entry is in the array); it sets varXAssetHeader (0xbacc050) and calls the type switch 0x2dc5f90 (a cmp chain) which calls each Load_<T>Ptr with the same flag"
   },
   "stream": {
+    "conditional_pointer_reads": true,
     "blocks": 8,
     "block_entry_size": 16,
     "dead_blocks": [

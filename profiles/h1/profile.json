@@ -39,6 +39,7 @@
     "note": "the asset loop body (called from DB_LoadXFile 0x367dc9): Load_Stream(flag, varXAsset, 16), then Load_XAssetHeader (0x382670) compares the type and calls the type's Load_<T>Ptr, as AW"
   },
   "stream": {
+    "conditional_pointer_reads": true,
     "blocks": 7,
     "block_entry_size": 16,
     "dead_blocks": [

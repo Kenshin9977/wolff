@@ -53,6 +53,7 @@
     "note": "Load_XAssetHeader: compares varXAsset->type and tail-jumps to the type's Load_<T>Ptr with its var set to varXAssetHeader (Load_XAsset 0x195a00 reads the entry, sets varXAssetHeader = varXAsset + 4, jumps here)"
   },
   "stream": {
+    "conditional_pointer_reads": true,
     "blocks": 8,
     "block_entry_size": 8,
     "dead_blocks": [1, 2, 7],
