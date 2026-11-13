@@ -1,0 +1,11 @@
+# Hand tables: each overrides the generated table of the same name; each cites the machine code.
+
+### fe35e0
+# XModelSurfs (0x24, Load_XModelSurfs 0x4e35e0): its name, then the XSurface array counted by the
+# LOD that holds it, not by its own numsurfs: `mov ecx, [varXModelLodInfo 0x11a1edc]; movzx edx,
+# word [ecx + 4]; call 0x4e2130` (0x4e3633). The struct is only ever reached through
+# XModelLodInfo.modelSurfs (+8, Load_XModelSurfsPtr 0x4e3660 called by 0x4e3700): the LOD is its
+# parent in the walk (ASSET|0x8|xmodelsurfs); the generated `%%` counted the Ptr function as a level.
+SELF|0x24
+AT|0x0|fe0d30
+LIST+|0x4|u16@%0x4|0x40|fe2130

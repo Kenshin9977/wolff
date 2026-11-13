@@ -1,0 +1,15 @@
+# Sample, 2026-11-13: 14 of 96 zones, 626 of 7996 MB; 37 asset types, each >= min(3, install)
+english__mp_rust_load
+english__mp_estate_load
+english__mp_derail_load
+english__code_post_gfx_mp
+english__code_post_gfx
+english__so_crossing_so_bridge
+english__so_rooftop_contingency
+english__so_chopper_invasion
+english__iw4_credits
+english__mp_brecourt
+english__mp_rust
+english__mp_boneyard
+english__so_ghillies
+english__co_hunted
