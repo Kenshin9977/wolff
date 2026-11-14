@@ -1,0 +1,197 @@
+# Hand tables for Modern Warfare 4's campaign (zonekit profile mw4sp; mw4's, every reader
+# identical instruction for instruction in the SP exe, addresses mapped): readers the machine-code transcriber
+# cannot render. Each cites the disassembly of the flattened dump (file offset == RVA).
+
+# scriptbundle / objectivedata's 0x21d2d00 (0x20, profile hand_shapes): its loop over the pointer
+# array at 8 is rotated by clang (`sub r12, 1; jb out` mid-loop, then the loop-invariant type test
+# `cmp byte [rdi], 6` each pass: "exit test not on the back edge"). The u32@0x18 pointers at 8,
+# through DB_RewindPrepare (mode 0, 0x21d2d6f): when the type u8@0 is 6, each non-null element
+# through DB_RewindPrepare (0x21d2e0f) to a 0x20 struct read by 0x21d2670 (0x21d2e45); else the
+# array alone. Then u32@0x1c elements of 0x18 at 0x10 (0x21d2eab), 0x21d2500 run on each in place.
+# The skip-0 test of stream.rewind_prepare.lookup on each answer, as the generated tables have it.
+### f21d2d00
+SELF|0x20
+IF|u64@0x8 != 0
+SUM|rwa|u8|0|0
+IF|(u64@0x8 >> 63) != 0
+MARK|da
+READ|8
+SUM|rwa|u64|$da|1
+ENDIF
+IF|((((u64@0x8 & 0x9000000000000000) != 0) & ((((u64@0x8 >> 63) == 0) + ((($rwa >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+IF|u8@0x0 == 6
+ARRAY|u32@0x18|0x8|f21d2d00_e1
+ELSE
+READ|(u32@0x18 * 8)
+ENDIF
+ENDIF
+ENDIF
+IF|u64@0x10 != 0
+SUM|rwb|u8|0|0
+IF|(u64@0x10 >> 63) != 0
+MARK|db
+READ|8
+SUM|rwb|u64|$db|1
+ENDIF
+IF|((((u64@0x10 & 0x9000000000000000) != 0) & ((((u64@0x10 >> 63) == 0) + ((($rwb >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+ARRAY|u32@0x1c|0x18|f21d2500
+ENDIF
+ENDIF
+
+### f21d2d00_e1
+SELF|0x8
+IF|u64@0x0 != 0
+SUM|rwc|u8|0|0
+IF|(u64@0x0 >> 63) != 0
+MARK|dc
+READ|8
+SUM|rwc|u64|$dc|1
+ENDIF
+IF|((((u64@0x0 & 0x9000000000000000) != 0) & ((((u64@0x0 >> 63) == 0) + ((($rwc >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+ARRAY|1|0x20|f21d2670
+ENDIF
+ENDIF
+
+# sightconfig's 0x21253c0 (0x34, profile hand_shapes): its own 0x34 struct, then push(1) and 8
+# bytes read into a fresh allocation (0x212541d), filed in the rewind table inline (0x2125422..
+# 0x2125517: the hash bucket loops and the free list, nothing read; refused by the transcriber,
+# "exit test not on the back edge"), then pop (the tail jump 0x212552c). Black Ops 7's 0x3890b20
+# element read the same 8 bytes.
+### f21253c0
+SELF|0x34
+READ|8
+
+# streaminginfo's 0x1e853d0 (an array of 16-byte {u16* counts, void** slots}, the struct holding
+# the count u32 at 0x4c above it), Black Ops 7's f389f050: the counts (u32@%0x4c of them) at 0,
+# then the slots at 8, each read with the count 0x1e86060 finds: the u16 at (slot - slots) / 8 in
+# the counts. Each pointer through DB_RewindPrepare, the skip-0 test as the generated tables have it.
+### f1e853d0
+SELF|0x10
+IF|u64@0x0 != 0
+SUM|rwa|u8|0|0
+IF|(u64@0x0 >> 63) != 0
+MARK|da
+READ|8
+SUM|rwa|u64|$da|1
+ENDIF
+IF|((((u64@0x0 & 0x9000000000000000) != 0) & ((((u64@0x0 >> 63) == 0) + ((($rwa >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+MARK|mw4_si_counts
+READ|(u32@%0x4c + u32@%0x4c)
+ENDIF
+ENDIF
+IF|u64@0x8 != 0
+SUM|rwb|u8|0|0
+IF|(u64@0x8 >> 63) != 0
+MARK|db
+READ|8
+SUM|rwb|u64|$db|1
+ENDIF
+IF|((((u64@0x8 & 0x9000000000000000) != 0) & ((((u64@0x8 >> 63) == 0) + ((($rwb >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+ARRAY|u32@%0x4c|0x8|f1e853d0_e1
+ENDIF
+ENDIF
+
+### f1e853d0_e1
+SELF|0x8
+IF|u64@0x0 != 0
+SUM|rwc|u8|0|0
+IF|(u64@0x0 >> 63) != 0
+MARK|dc
+READ|8
+SUM|rwc|u64|$dc|1
+ENDIF
+IF|((((u64@0x0 & 0x9000000000000000) != 0) & ((((u64@0x0 >> 63) == 0) + ((($rwc >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+READ|(u16[($mw4_si_counts + (# * 2))] * 2)
+ENDIF
+ENDIF
+
+# streaminginfo's lists of 16-byte entries (f1e85bd0_e1, _e2). 0x1dc1a40: {name*, u32 type hash at
+# 8}: Load_AssetType maps the hash in place (0x1dc1ac2), then 0x22c7b60(type) reads poolInfo's byte
+# 0x29 of the type (0xc9abc70 + 0x29 + 48 * type): set for xmodel, attachment, weapon and
+# xcompositemodel only (the dump's table, Black Ops 7's four), whose name is then read (0x1dc1b24,
+# through DB_RewindPrepare). The walkers have no type map: the four FNV-1a 32 hashes. 0x1e8f8e0:
+# the same with the pool id itself, u16 at 0xc (0x1e8f954): 8, 56, 57, 114.
+### f1dc1a40
+SELF|0x10
+IF|((((u32@0x8 == 0xddc67364) + (u32@0x8 == 0xa5cb7c68)) + (u32@0x8 == 0x6f332041)) + (u32@0x8 == 0xf2af5147)) != 0
+IF|u64@0x0 != 0
+SUM|rwa|u8|0|0
+IF|(u64@0x0 >> 63) != 0
+MARK|da
+READ|8
+SUM|rwa|u64|$da|1
+ENDIF
+IF|((((u64@0x0 & 0x9000000000000000) != 0) & ((((u64@0x0 >> 63) == 0) + ((($rwa >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+STR+|0x0
+ENDIF
+ENDIF
+ENDIF
+
+### f1e8f8e0
+SELF|0x10
+IF|((((u16@0xc == 8) + (u16@0xc == 56)) + (u16@0xc == 57)) + (u16@0xc == 114)) != 0
+IF|u64@0x0 != 0
+SUM|rwa|u8|0|0
+IF|(u64@0x0 >> 63) != 0
+MARK|da
+READ|8
+SUM|rwa|u64|$da|1
+ENDIF
+IF|((((u64@0x0 & 0x9000000000000000) != 0) & ((((u64@0x0 >> 63) == 0) + ((($rwa >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+STR+|0x0
+ENDIF
+ENDIF
+ENDIF
+
+# blendspace2d's 0x2144420 (0x58, profile hand_shapes): refused by the transcriber ("arms end
+# branch / branch" at 0x214456a: the loop's per-element test of the parent's flag is not hoisted).
+# Its own 0x58, push(0xf), two script strings 0x18/0x1c (Load_CustomScriptString 0x24c0cc0, 4 bytes
+# each), then u32@0x30 elements of 0x18 at 8 (DB_RewindPrepare 0x21444be, read 0x214450e): when
+# u8@0x48 bit 1 (0x2144566) each element's pointer at 0 under push(2) is a blendspace2d (inline:
+# 0x2144420 again 0x214454f, name-only: Load_String 0x21445c9), else the xanim Ptr loader 0x2143df0
+# with flag 0 on it (0x2144574). Then u32@0x34 x 4 bytes at 0x10 (0x2144640), script strings
+# 0x38 and 0x50 (0x2144657, 0x2144666).
+### f2144420
+SELF|0x58
+READ|4
+READ|4
+IF|u64@0x8 != 0
+SUM|rwa|u8|0|0
+IF|(u64@0x8 >> 63) != 0
+MARK|da
+READ|8
+SUM|rwa|u64|$da|1
+ENDIF
+IF|((((u64@0x8 & 0x9000000000000000) != 0) & ((((u64@0x8 >> 63) == 0) + ((($rwa >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+ARRAY|u32@0x30|0x18|f2144420_e1
+ENDIF
+ENDIF
+IF|u64@0x10 != 0
+SUM|rwb|u8|0|0
+IF|(u64@0x10 >> 63) != 0
+MARK|db
+READ|8
+SUM|rwb|u64|$db|1
+ENDIF
+IF|((((u64@0x10 & 0x9000000000000000) != 0) & ((((u64@0x10 >> 63) == 0) + ((($rwb >> 24) & 0xffffff) != 0)) != 0)) & 0xff) == 1
+READ|(u32@0x34 * 4)
+ENDIF
+ENDIF
+READ|4
+READ|4
+
+### f2144420_e1
+SELF|0x18
+IF|(u8@%0x48 & 2) != 0
+IF|u64@0x0 != 0
+IF|(u64@0x0 & 0x7fffffffffffffff) == 0x7fffffffffffffff
+ARRAY|1|0x58|f2144420
+ELSE
+IF|(u64@0x0 & 0x7fffffffffffffff) == 0x3fffffffffffffff
+READSTR
+ENDIF
+ENDIF
+ENDIF
+ELSE
+AT|0x0|f2143df0
+ENDIF

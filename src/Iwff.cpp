@@ -315,7 +315,9 @@ namespace
         auto PatchPath = std::filesystem::path(FilePath);
         PatchPath.replace_extension(".fp");
         std::error_code Ec;
-        const bool Patched = std::filesystem::exists(PatchPath, Ec);
+        // an empty .fp is no patch: Modern Warfare 4's campaign install (sp26) ships 529 of its 597
+        // .fp files empty, sp_frontend's among them, beside a whole .ff
+        const bool Patched = std::filesystem::exists(PatchPath, Ec) && std::filesystem::file_size(PatchPath, Ec) > 0 && !Ec;
         PatchDelta Patch;
         std::string PatchError;
         std::future<bool> PatchRead;

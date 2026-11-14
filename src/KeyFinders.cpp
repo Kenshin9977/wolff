@@ -575,7 +575,11 @@ bool T6FromExe(const std::filesystem::path& Exe, std::vector<Bytes>& Candidates,
     LocateT6Key(D, P, T, Candidates);
     if (Candidates.size() == Before)
     {
-        Error = "no key built before DB_SetKey in " + Exe.filename().string();
+        // The 2012-2015 builds (no SteamStub) build the key in code kept encrypted in .conceal
+        if (P.Has(".conceal"))
+            Error = "old game build (" + Exe.filename().string() + "), update it through Steam";
+        else
+            Error = "no key built before DB_SetKey in " + Exe.filename().string();
         return false;
     }
     return true;

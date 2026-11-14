@@ -11,7 +11,7 @@ namespace wolff
 {
     struct GameModule
     {
-        // Short engine name: "IW3".."IW8", "T4".."T9", "S1", "S2", "H1", "BO6", "BO7", "MWIII", "CODOL"
+        // Short engine name: "IW3".."IW8", "T4".."T9", "S1", "S2", "H1", "BO6", "BO6SP", "BO7", "MW4", "MW4SP", "MWIII", "CODOL"
         const char* Engine;
         const char* Title;
         // The executable that identifies an install on disk, empty when several titles share one.

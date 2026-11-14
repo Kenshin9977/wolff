@@ -1,0 +1,241 @@
+{
+  "name": "mw4sp",
+  "title": "Call of Duty: Modern Warfare 4 campaign (MW4, sp26)",
+  "note": "Campaign profile beside mw4 (2026-11-13). Exe: Cordycep 2.9.4.0's dump of sp26-cod.exe (PE timestamp 0x6aeb0094, a later build than the MP dump's 0x6add5b92), flattened (file offset == RVA). Same engine and loaders as the MP exe; 421 asset types (MP 425: sndhdrenvelope, edgefilter, mapcircletemplate, gamemodedictionary absent, ids from 400 shifted). Every address mapped from mw4's by matching the two dumps' functions (C:\\tmp\\mw4sp\\research: fsig.py, fmatch.py), each primitive checked instruction for instruction.",
+  "image_base": "0x7ff6f0ae0000",
+  "install_note": "Steam's Call of Duty install (steamapps\\Call of Duty\\Content\\sp26): sp26\\*.ff with their .fp patches, streamed data in sp26\\*.xsub. Working set: every zone not named *_tr, and transient zones sampled per name family.",
+  "ghidra": {
+    "project_name": "mw4spdump",
+    "epilogue_tags": []
+  },
+  "transcriber": "asm",
+  "zone_format": "iwctx",
+  "globals": {},
+  "inert_base": [],
+  "tables": {
+    "generated": "tables.generated.txt",
+    "hand": "tables.hand.txt",
+    "inert_proven": "inert.proven.txt",
+    "inert_reach": "inert.reach.txt",
+    "blocks": "blocks.txt"
+  },
+  "release": {
+    "identical_zones_min": 0,
+    "reads_ratio_min": 1.0,
+    "occurrences_min": 0
+  },
+  "args": {
+    "file_read": [
+      "rdx",
+      "r8"
+    ],
+    "load_stream": [
+      "rdx",
+      "r8",
+      "r9"
+    ],
+    "load_string": [
+      "rdx"
+    ],
+    "push": [
+      "rdx"
+    ],
+    "alloc": [
+      "rdx"
+    ]
+  },
+  "args_note": "every loader and primitive takes the load context in rcx: file_read(ctx, dst, n), Load_Stream(ctx, bool atStreamStart, dst, n), Load_String(ctx, char **), the context's push(ctx, block) and alloc(ctx, align)",
+  "rva": {
+    "file_read": "0x22dcf40",
+    "load_stream": "0x24bfb60",
+    "load_string": "0x24c0ac0",
+    "alloc": "0x23167e0",
+    "push": "0x2316c60",
+    "pop": "0x2316c70"
+  },
+  "rva_note": "DB_ReadXFile(ctx, dst, n); Load_Stream(ctx, atStreamStart, dst, n): reads unless block 11 (memset), the position ctx+0x108 advanced; Load_String(ctx, char **) a byte at a time; alloc/push/pop are the context's methods (vtable 0xc9b26c0 +8/+0x10/+0x18). Found from Cordycep 2.9.4.0's CoDMW7Handler.toml patterns and the call graph (C:\\tmp\\mw4\\research\\primitives.md); the exe is a clang build",
+  "stream": {
+    "blocks": 16,
+    "block_entry_size": 16,
+    "dead_blocks": [
+      11
+    ],
+    "marker_inline": "0xffffffffffffffff",
+    "marker_resident": "0xfffffffffffffffe",
+    "markers_note": "draft: phase 2 settles the markers (a pointer & 0x7fffffffffffffff equal to 0x7fffffffffffffff inline, 0x3fffffffffffffff a name-only reference; the asset list's slots -1 or 0x7000000000000000)",
+    "backref_max_nibble": "0xf",
+    "byte_strings": true,
+    "load_stream_read_return": "0x24bfbae",
+    "stream_objects": [
+      "0xde0ea70",
+      "0xde0ea78"
+    ],
+    "stream_objects_note": "loadStreamObj (0xde0ea70, the callable at +8): the readers' own read, empty in the dump; DB_InitLoadStreams installs {functor vtable 0xc9b4ab8, Load_Stream}",
+    "machinery": [
+      "0x1d5e370",
+      "0x2319150",
+      "0x22cc5d0",
+      "0x2249680",
+      "0x24c0bf0",
+      "0x24c0c20",
+      "0x24c0c30",
+      "0x24c0c40",
+      "0x1ee3dd0"
+    ],
+    "machinery_note": "the function object assignment 0x1d5e370 and the stream state init 0x2319150 DB_InitLoadStreams (0x24c09f0) calls; Load_AssetType 0x22cc5d0; Load_AssetHeader 0x2249680 (five jump tables and a range tree, its targets in types.json's loaders); the Load_Stream functor class (vtable 0xc9b4ab8: invoke, copy, move, destroy); DB_RewindEnd 0x1ee3dd0 (DB_RegisterStreamOffset inlined in it)",
+    "null_page": true,
+    "null_page_note": "engine lookups the dump leaves empty return null and the loader reads through it (MWIII AllocateUniqueString 0x3d41bd0 skipped; BO7 Load_CustomScriptString 0x3ad7730 falls back to address 8 when the script string map has no entry): a zero page reads as an empty result",
+    "reader_args": true,
+    "load_stream_result": true,
+    "read_calls": {
+      "0x24c0cc0": "4"
+    },
+    "stream_object_values": {
+      "0xde0ea70": "0xc9b4ab8"
+    },
+    "pure_loops": true,
+    "clang_shapes": true,
+    "stack_cookie": "0xd641e00",
+    "global_values": {
+      "0xe1e8db0": "0",
+      "0xf647b25": "0"
+    },
+    "global_values_note": "aipaths' node reader 0x2254d70 reads 4 more bytes when u32 0xe1e8db0 != 2 and u8 0xf647b25 == 0: both 0 in the dump, which the emulated game reads too",
+    "clang_shapes_note": "the exe is a clang build: the stack cookie compared inline at a reader's end, an array reader (ctx, flag, count r8, T *r9) testing Load_Stream's result and its count together (0x1d9c190)",
+    "pure_loops_note": "the Ptr functions' name-only arm hashes the name it has just read inline (FNV-1a, lower case, slashes folded: keyvaluepairs 0x2197f20), a loop of two back edges the transcriber cannot structure; it reads nothing",
+    "read_call_answers": {
+      "0x24c0cc0": "0"
+    },
+    "read_call_answers_note": "Load_CustomScriptString 0x24c0cc0 looks the 4 bytes up in the zone's script string map (zone+0x18e88, filled at run time, empty here) and raises a fatal error (0xa48f890, then int3 at 0x24c0d84) when they are not there: the emulator reads the 4 bytes and leaves 0 in the slot (map_spawn_points, its first user)",
+    "rewind_prepare": {
+      "fn": "0x1ee3960",
+      "result": "0x28",
+      "mask": "0x9000000000000000",
+      "set_data": "0x1ee3db0",
+      "lookup": {
+        "fn": "0x2318910",
+        "outs": {
+          "s1": [
+            8,
+            0
+          ],
+          "s2": [
+            1,
+            1
+          ],
+          "s3": [
+            1,
+            0
+          ]
+        },
+        "note": "LookupRewindCache(key, u16 [ctx+0xc38], bool mode==0, u32 [ctx+0xc28], [ctx+0xc30], u64 *data, bool *resident, bool *counted): the global cache of data other zones loaded (empty in the dump). Found with resident set, DB_RewindPrepare takes its skip arm: R+0x28 = 0, DB_SkipXFile of the descriptor's skip size, *p = the cached data. A descriptor with skip size 0 (transient zones' xmodelsurfs) has nothing in the file"
+      }
+    },
+    "rewind_prepare_note": "DB_RewindPrepare 0x1ee3960, BO7's arms (bit 63 descriptor, bit 60 data, else the rewind key & 0x0fff..., looked up inline in zone+0x18e80); DB_RewindSetData 0x1ee3db0",
+    "pointer_ifs": true,
+    "rewind_links": true,
+    "rewind_links_note": "a DB_RewindPrepare pointer linked layout or not (both walkers): bit 63 past its descriptor, bit 60 here, its key filed unless bit 61; another value the data filed under that key earlier in the zone. equipmentsfx 0x2164ce0 sizes three arrays by u32 0x60 of the struct its 0x1b8 names, a rewind key in global_shared_mp",
+    "pointer_ifs_note": "the C++ walker links each pointer of its IF chain: one DB_RewindPrepare decides by its top bits (bit 63 past the 8-byte descriptor, bit 60 here, else the rewind table's key, the low 60 bits, of an earlier load; ZoneTableWalker PointerIf kind 3), an asset slot inline (0x7fff...) or by the asset's 63-bit hash (kind 4)",
+    "read_calls_note": "Load_CustomScriptString(ctx, u32 *) 0x24c0cc0: 4 bytes read, looked up in the zone's script string map"
+  },
+  "load_state": {
+    "size": "0xc40",
+    "vtable": "0xc9b26c0",
+    "slots": {
+      "alloc": "0x8",
+      "push": "0x10",
+      "pop": "0x18",
+      "pre_asset": "0x20",
+      "post_asset": "0x28"
+    },
+    "fields": {
+      "stream_pos": "0x108",
+      "block_index": "0x190"
+    },
+    "note": "DBLoadCtx (0xc40), vtable 0xc9b26c0; the stream state at 8 (position +0x108, block +0x190), BO7's offsets"
+  },
+  "stream_init_call": {
+    "fn": "0x24c09f0",
+    "args": [
+      "state",
+      "zone"
+    ],
+    "memory_at": "0x78",
+    "table_at": "0x18d78",
+    "note": "DB_InitLoadStreams(ctx, zone) 0x24c09f0: the stream state over the zone memory's 16 blocks (0x2319150), the Load_Stream functor installed in loadStreamObj; the zone memory's fields are BO7's + 0x60",
+    "memory_objects": [
+      {
+        "at": "0x18e80",
+        "size": "0x50",
+        "u64": {
+          "0x40": "0x10000"
+        },
+        "heads": {
+          "at": "0x38",
+          "count": "0x10000"
+        },
+        "free_list": {
+          "at": "0x10",
+          "nodes": "0x400000",
+          "node_size": "0x18"
+        },
+        "chain": true,
+        "note": "the rewind hash (BO7's 0x18e20 + 0x60); bucket count not checked on MW4"
+      },
+      {
+        "at": "0x18e88",
+        "size": "0x50",
+        "u64": {
+          "0x40": "0x100"
+        },
+        "heads": {
+          "at": "0x38",
+          "count": "0x100"
+        },
+        "note": "the script string map Load_CustomScriptString looks up (BO7's 0x18e28 + 0x60)"
+      }
+    ]
+  },
+  "asset_type_map": {
+    "fn": "0xb8ee370",
+    "note": "GetMappedType: FNV-1a 32 of the type name -> pool id"
+  },
+  "asset_dispatch": {
+    "fn": "0x224b450",
+    "args": [
+      "state",
+      "flag",
+      "entry"
+    ],
+    "flag": 0,
+    "always_run": true,
+    "note": "Load_Asset(ctx, 0, &entry) 0x224b450: Load_Stream of the 16-byte entry, Load_AssetType, Load_AssetHeader 0x2249680"
+  },
+  "zone_load": {
+    "asset_list_size": "0x30",
+    "list_block": 15,
+    "load_string_list": "0x1e4a9d0",
+    "load_unk_list": "0x1ed3ca0",
+    "note": "the XFile loader 0x24c0440: file_read of the 0x30 list, push(15), DB_LoadStringList, DB_LoadUnkList, pop, push(15), the array alloc(7), Load_Asset per entry (BO7's layout)",
+    "strings_inline_bit": "61"
+  },
+  "crt": {
+    "0xc906e00": "memset"
+  },
+  "lookup_calls": {
+    "0x22c7b60": {
+      "table": "0xc9abc99",
+      "stride": "48",
+      "width": 1
+    }
+  },
+  "lookup_calls_note": "0x22c7b60(type): poolInfo's byte 0x29 of the type (0xc9abc70, 48-byte records), through a singleton",
+  "hand_shapes": {
+    "0x21d2d00": "0x20",
+    "0x21253c0": "0x34",
+    "0x2144420": "0x58"
+  },
+  "hand_shapes_note": "0x21d2d00 (scriptbundle, objectivedata): refused (a rotated loop), its hand table in tables.hand.txt reads its own 0x20 struct",
+  "transcriber_budget": 200000,
+  "transcriber_budget_note": "a reader whose symbolic run passes 200 000 instructions is refused (the table generation once took over 10 minutes on a handful of them)"
+}

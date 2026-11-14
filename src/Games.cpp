@@ -97,6 +97,8 @@ namespace wolff
             { "BO7", "Black Ops 7", "cod.exe", "IWffa100", 0x19, "cod25", Bo7Header, "bo7" },
             // Modern Warfare 4 (cod26) by its folder only: its headers carry Black Ops 7's section too
             { "MW4", "Modern Warfare 4", "cod.exe", "IWffa100", 0x19, "cod26", nullptr, "mw4" },
+            // its campaign (sp26, its own sp26-cod.exe, a later build with its own tables) by its folder too
+            { "MW4SP", "Modern Warfare 4 (campaign)", "sp26-cod.exe", "IWffa100", 0x19, "sp26", nullptr, "mw4sp" },
             // sealed IW4 streams (Codol.h), found inside the install's .ifs archives
             { "CODOL", "Call of Duty Online", "codoMP_client_shipRetail.exe", "IWff0100", 461 },
             // the Sledgehammer container (version 0x42)

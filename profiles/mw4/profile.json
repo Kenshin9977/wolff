@@ -3,7 +3,7 @@
   "title": "Call of Duty: Modern Warfare 4 (MW4, cod26)",
   "note": "Phase 2 (2026-11-10): tables walk the 317 working-set zones to their end (C++), 311 recorded zones identical to the emulated game; GrayWolf's Games/MW4 exports models, images, sounds, anims (graywolf-tools docs/games/MW4.md). Exe: Cordycep 2.9.4.0's dump of Call of Duty HQ's cod.exe (PE timestamp 0x6add5b92), flattened (file offset == RVA). Cordycep names the title mw7. Install: Steam's Call of Duty HQ, cod26 folder (plain files, no CASC), the container of Black Ops 7 (IWffa100, header version 25).",
   "image_base": "0x7ff7e5e90000",
-  "install_note": "Plain Steam files: cod26\\*.ff with their .fp update patches beside, streamed data in cod26\\*.xsub and Call of Duty HQ\\cod26_shared*.xsub. The working set: every zone not named *_tr, and transient zones sampled per name family. The campaign (sp26) is only in the Xbox app's install (steamapps\\Call of Duty\\Content\\sp26).",
+  "install_note": "Plain Steam files: cod26\\*.ff with their .fp update patches beside, streamed data in cod26\\*.xsub and Call of Duty HQ\\cod26_shared*.xsub. The working set: every zone not named *_tr, and transient zones sampled per name family. The campaign (sp26, steamapps\\Call of Duty\\Content\\sp26) has its own exe and profile, mw4sp.",
   "ghidra": {
     "project_name": "mw4dump",
     "epilogue_tags": []

@@ -278,6 +278,45 @@ namespace
         std::error_code Ec;
         return std::filesystem::is_regular_file(P, Ec);
     }
+
+    // Why each exe gave no key, in one line: reasons that differ only by the exe's name are said
+    // once with the names listed ("in t6sp.exe, t6zm.exe"), the others joined by "; "
+    struct Reasons
+    {
+        struct Group
+        {
+            std::string Template;   // the reason, the exe's name replaced by \x01
+            std::string Names;
+        };
+        std::vector<Group> Groups;
+
+        void Add(const std::filesystem::path& Exe, const std::string& Why)
+        {
+            const std::string Name = Exe.filename().string();
+            std::string T = Why;
+            const size_t At = Name.empty() ? std::string::npos : T.find(Name);
+            if (At != std::string::npos) T.replace(At, Name.size(), "\x01");
+            for (auto& G : Groups)
+                if (G.Template == T)
+                {
+                    if (At != std::string::npos) G.Names += ", " + Name;
+                    return;
+                }
+            Groups.push_back(Group{ T, At != std::string::npos ? Name : std::string() });
+        }
+
+        std::string Text() const
+        {
+            std::string Out;
+            for (const auto& G : Groups)
+            {
+                std::string T = G.Template;
+                if (const size_t At = T.find('\x01'); At != std::string::npos) T.replace(At, 1, G.Names);
+                Out += (Out.empty() ? "" : "; ") + T;
+            }
+            return Out;
+        }
+    };
 }
 
 std::filesystem::path DefaultKeyCacheFile()
@@ -328,14 +367,19 @@ bool FindKey(std::string_view Id, const std::filesystem::path& Install, std::vec
         Out = Keys.front().second;
         return true;
     }
-    std::string Last = "no " + ExeList(*S) + " in " + Install.string();
+    Reasons Why;
     for (const auto* Exe : S->Exes)
-        if (IsFile(Install / Exe) && FindFrom(*S, Install / Exe, Install, CheckFile, Keys, Last))
+    {
+        if (!IsFile(Install / Exe)) continue;
+        std::string One;
+        if (FindFrom(*S, Install / Exe, Install, CheckFile, Keys, One))
         {
             Out = Keys.front().second;
             return true;
         }
-    Error = Last;
+        Why.Add(Exe, One);
+    }
+    Error = Why.Groups.empty() ? "no " + ExeList(*S) + " in " + Install.string() : Why.Text();
     return false;
 }
 
@@ -404,13 +448,18 @@ bool GetKey(const Context& Ctx, std::string_view Id, const std::filesystem::path
     if (!S->Exes.empty() && !O.FindInGameFiles)
         return Fail("looking for it in the game's files is turned off (KeyOptions::FindInGameFiles)");
 
-    std::string Why;
+    Reasons Why;
     for (const auto& From : Sources)
     {
         std::vector<std::pair<std::string, Bytes>> Keys;
         const std::filesystem::path Exe = S->Exes.empty() ? std::filesystem::path() : std::filesystem::path(From.Source);
         const auto CheckFile = IsFile(File) && File.extension() == ".ff" ? File : std::filesystem::path();
-        if (!FindFrom(*S, Exe, Install, CheckFile, Keys, Why)) continue;
+        std::string One;
+        if (!FindFrom(*S, Exe, Install, CheckFile, Keys, One))
+        {
+            Why.Add(Exe, One);
+            continue;
+        }
         std::vector<Entry> New;
         for (auto& [KeyId, K] : Keys) New.push_back(Entry{ KeyId, From, std::move(K) });
         for (const auto& E : New) Remember(Found, E);
@@ -418,6 +467,6 @@ bool GetKey(const Context& Ctx, std::string_view Id, const std::filesystem::path
         Out = New.front().Key;
         return true;
     }
-    return Fail(Why.empty() ? "not found" : Why);
+    return Fail(Why.Groups.empty() ? "not found" : Why.Text());
 }
 }

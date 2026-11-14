@@ -599,6 +599,7 @@ namespace
         // pointer's low 60 bits) -> where its data is, and the asset pointers named by hash (field,
         // the asset's 63-bit hash), resolved against every instance's hash at +0 once the walk ends
         std::vector<std::tuple<int64_t, uint64_t, int>> HashRefs;   // field, hash, the type's owner id (-1: any)
+        std::unordered_map<uint64_t, int64_t> AssetHashes;          // without a layout (rewind_links): name hash -> asset
 
         // stream.keyed_refs: the inline arm, as the transcriber writes it or by hand, or an asset
         // pointer's (both markers, -1 and 0x7fff...); the whole text, a prefix match is not one
@@ -717,7 +718,12 @@ namespace
                 // pointer's key is registered unless bit 61 is set (DB_RewindEnd 0x382f4f0)
                 constexpr uint64_t KeyMask60 = 0x0FFFFFFFFFFFFFFFull;
                 if (!Layout && !Rules->RewindLinks) return;
-                if ((Head >> 63) & 1 || (Head >> 60) & 1)
+                // stream.rewind_prepare.lookup (Modern Warfare 4): a descriptor whose skip size (bits
+                // 24..47) is 0 has no data in this file, the game takes it from its cache of what
+                // other zones loaded under the pointer's key: linked by that key, as a key reference
+                const bool Cached = ((Head >> 63) & 1) && Rules->RewindLinks && Pos >= 0 && Pos + 8 <= Len() &&
+                                    ((Pointer(Pos) >> 24) & 0xFFFFFF) == 0;
+                if (!Cached && ((Head >> 63) & 1 || (Head >> 60) & 1))
                 {
                     const int64_t Target = Pos + (((Head >> 63) & 1) ? 8 : 0);
                     Out->Links.emplace_back(At, Target);
@@ -752,6 +758,20 @@ namespace
                 // a Ptr loader's slot: inline (0x7fff...), a name (0x3fff..., its text follows), or
                 // the hash of an asset defined elsewhere (DB_AddAssetRef by hash, 0x3a67770)
                 constexpr uint64_t Low = 0x7FFFFFFFFFFFFFFFull;
+                if (Rules->RewindLinks)
+                {
+                    // stream.rewind_links (Modern Warfare 4), layout or not, as walker.py: for asset@,
+                    // an asset streamed inline is filed under its name hash (its first 8 bytes), and
+                    // a slot holding a hash reads the asset filed under it earlier in the zone
+                    // (sp_rex_nyc's vectorfield: u16 [image + 0x26] of an image by hash)
+                    if ((Head & Low) == Low)
+                    {
+                        K->FieldLinks[At] = Pos;
+                        if (Pos >= 0 && Pos + 8 <= Len()) AssetHashes.try_emplace(Pointer(Pos) & Low, Pos);
+                    }
+                    else if ((Head & Low) != 0x3FFFFFFFFFFFFFFFull)
+                        if (const auto F = AssetHashes.find(Head & Low); F != AssetHashes.end()) K->FieldLinks[At] = F->second;
+                }
                 if (!Layout) return;
                 if ((Head & Low) == Low)
                 {
@@ -1583,6 +1603,10 @@ namespace
         W.WhereIdx = -1;
         W.Stack.push_back(W.OwnerId(Name));
         W.OpenInstance(W.Stack.back(), Pos);
+        // stream.rewind_links: a listed asset filed under its name hash, as an asset streamed
+        // inline (PointerIf kind 4)
+        if (Rules.RewindLinks && Pos >= 0 && Pos + 8 <= W.Len())
+            W.AssetHashes.try_emplace(W.Pointer(Pos) & 0x7FFFFFFFFFFFFFFFull, Pos);
         try
         {
             W.Depth = 0;
